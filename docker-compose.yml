@@ -1,0 +1,102 @@
+# OPS v2 개발 환경
+# 사용법: docker compose up -d
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ops_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ops}
+      TZ: Asia/Seoul
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./infra/docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    command: ['postgres', '-c', 'timezone=Asia/Seoul']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    environment:
+      TZ: Asia/Seoul
+    command:
+      [
+        'redis-server',
+        '--maxmemory',
+        '${REDIS_MAXMEMORY:-256mb}',
+        '--maxmemory-policy',
+        'allkeys-lru',
+        '--save',
+        '60',
+        '1',
+        '--loglevel',
+        'warning',
+      ]
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # API 서버 (NestJS)
+  api:
+    image: node:20-slim
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ops}:${POSTGRES_PASSWORD:-ops_dev_password}@db:5432/${POSTGRES_DB:-ops}
+      REDIS_URL: redis://redis:6379
+      TZ: Asia/Seoul
+    volumes:
+      - ./ops-api:/app
+      - api_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    command: >
+      sh -c "
+      npm install &&
+      npx prisma generate &&
+      npm run start:dev
+      "
+    restart: unless-stopped
+
+  # Web 클라이언트 (Next.js)
+  web:
+    image: node:20-slim
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      TZ: Asia/Seoul
+    volumes:
+      - ./ops-web:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+    ports:
+      - '3001:3001'
+    command: sh -c "npm install && npm run dev -- -p 3001"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  redis_data:
+  api_node_modules:
+  web_node_modules:
+  web_next:
