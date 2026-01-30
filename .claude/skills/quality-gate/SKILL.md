@@ -16,12 +16,13 @@ allowed-tools: Read, Bash(npm:*), Bash(grep:*), Glob, Grep
 | 1 | 빌드 성공 | `npm run build` 통과 | ✅ |
 | 2 | 테스트 통과 | `npm test` 통과 | ✅ |
 | 3 | 테스트 커버리지 | 80% 이상 | ⚠️ |
-| 4 | TypeScript strict | 타입 에러 0 | ✅ |
-| 5 | ESLint | warning 0 | ✅ |
-| 6 | any 타입 없음 | 검색 결과 0 | ✅ |
-| 7 | console.log 없음 | 검색 결과 0 | ✅ |
-| 8 | Swagger 문서화 | Controller/DTO 데코레이터 | ✅ |
-| 9 | TODO/FIXME 확인 | 목록 출력 | ⚠️ |
+| 4 | Service 테스트 파일 | `.service.ts` → `.service.spec.ts` 존재 | ✅ |
+| 5 | TypeScript strict | 타입 에러 0 | ✅ |
+| 6 | ESLint | warning 0 | ✅ |
+| 7 | any 타입 없음 | 검색 결과 0 | ✅ |
+| 8 | console.log 없음 | 검색 결과 0 | ✅ |
+| 9 | Swagger 문서화 | Controller/DTO 데코레이터 | ✅ |
+| 10 | TODO/FIXME 확인 | 목록 출력 | ⚠️ |
 
 ---
 
@@ -47,14 +48,33 @@ cd ops-web && npm test
 cd ops-api && npm test -- --coverage
 ```
 
-### Step 4: Lint 체크
+### Step 4: Service 테스트 파일 존재 체크
+
+> **TDD 결과 검증**: 모든 `.service.ts` 파일에 대응하는 `.service.spec.ts` 필수
+
+```bash
+# Service 파일 목록
+find ops-api/src -name "*.service.ts" -not -name "*.spec.ts"
+
+# 대응하는 spec 파일 존재 확인
+for f in $(find ops-api/src -name "*.service.ts" -not -name "*.spec.ts"); do
+  spec="${f%.ts}.spec.ts"
+  if [ ! -f "$spec" ]; then
+    echo "MISSING: $spec"
+  fi
+done
+```
+
+**통과 조건**: MISSING 출력 0건
+
+### Step 5: Lint 체크
 
 ```bash
 cd ops-api && npm run lint
 cd ops-web && npm run lint
 ```
 
-### Step 5: 금지 패턴 검색
+### Step 6: 금지 패턴 검색
 
 **any 타입**:
 ```bash
@@ -71,7 +91,7 @@ grep -r "console.log" --include="*.ts" --include="*.tsx" ops-api/src ops-web/src
 grep -rn "TODO\|FIXME" --include="*.ts" --include="*.tsx" ops-api/src ops-web/src
 ```
 
-### Step 6: Swagger 문서화 체크 (ops-api)
+### Step 7: Swagger 문서화 체크 (ops-api)
 
 > **중요**: 새로운/변경된 Controller와 DTO에 Swagger 데코레이터 필수
 
