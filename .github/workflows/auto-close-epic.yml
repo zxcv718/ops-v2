@@ -1,0 +1,83 @@
+name: Auto Close Epic
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  check-epic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and close Epic if all sub-issues closed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            // Find parent Epic reference (e.g., "상위 Epic\n- #2")
+            const epicMatch = body.match(/상위 Epic[\s\S]*?#(\d+)/);
+            if (!epicMatch) {
+              console.log('No parent Epic found');
+              return;
+            }
+
+            const epicNumber = parseInt(epicMatch[1]);
+            console.log(`Found parent Epic #${epicNumber}`);
+
+            // Get Epic issue
+            const epic = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: epicNumber
+            });
+
+            if (epic.data.state === 'closed') {
+              console.log('Epic already closed');
+              return;
+            }
+
+            // Parse sub-issues from Epic body
+            const epicBody = epic.data.body || '';
+            const subIssueMatches = epicBody.matchAll(/- \[[ x]\] #(\d+)/g);
+            const subIssueNumbers = [...subIssueMatches].map(m => parseInt(m[1]));
+
+            if (subIssueNumbers.length === 0) {
+              console.log('No sub-issues found in Epic');
+              return;
+            }
+
+            console.log(`Sub-issues: ${subIssueNumbers.join(', ')}`);
+
+            // Check if all sub-issues are closed
+            let allClosed = true;
+            for (const num of subIssueNumbers) {
+              const subIssue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: num
+              });
+              if (subIssue.data.state !== 'closed') {
+                console.log(`Sub-issue #${num} is still open`);
+                allClosed = false;
+                break;
+              }
+            }
+
+            if (allClosed) {
+              console.log('All sub-issues closed, closing Epic');
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: epicNumber,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: epicNumber,
+                body: '🎉 모든 하위 이슈가 완료되어 Epic을 자동으로 닫습니다.'
+              });
+            }
