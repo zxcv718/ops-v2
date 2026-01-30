@@ -77,15 +77,32 @@
 
 ## 개발 방법론
 
-### TDD (API 필수)
+### TDD 정책
 
+| 대상 | TDD | 비고 |
+|------|-----|------|
+| Service (비즈니스 로직) | ✅ 필수 | `/tdd` 스킬 사용 권장 |
+| Controller | ⚠️ 권장 | 통합 테스트로 대체 가능 |
+| Entity, DTO, Module | ❌ 해당없음 | 설정 코드 |
+
+**TDD 사이클**:
 ```
-/tdd "기능명"
-
 1. RED: 실패하는 테스트 먼저
 2. GREEN: 최소 코드로 통과
 3. REFACTOR: 코드 개선
 ```
+
+**Mock Factory 사용** (`test/factories/`):
+```typescript
+import { createMockUser, createMockGuardian } from '../../../test/factories/index.js';
+
+const user = createMockUser({ email: 'test@example.com' });
+const guardian = createMockGuardian({ userId: user.id });
+```
+
+**Quality Gate에서 검증**:
+- 모든 `.service.ts`에 대응하는 `.service.spec.ts` 필수
+- 커버리지 80% 이상
 
 ### 품질 체크 (PR 전 필수)
 

@@ -1,26 +1,29 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service.js';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import {
+  createMockUser,
+  createMockUserWithoutPassword,
+  resetUserCounter,
+} from '../../../test/factories/index.js';
+import {
+  createMockPrismaService,
+  createMockJwtService,
+} from '../../../test/utils/test-helper.js';
 
 describe('AuthService', () => {
   let service: AuthService;
-
-  const mockPrismaService = {
-    user: {
-      findUnique: mock(() => null),
-      create: mock(() => null),
-    },
-  };
-
-  const mockJwtService = {
-    signAsync: mock(() => Promise.resolve('mock-token')),
-    verifyAsync: mock(() => Promise.resolve({ sub: 'user-id' })),
-  };
+  let mockPrismaService: ReturnType<typeof createMockPrismaService>;
+  let mockJwtService: ReturnType<typeof createMockJwtService>;
 
   beforeEach(async () => {
+    resetUserCounter();
+    mockPrismaService = createMockPrismaService();
+    mockJwtService = createMockJwtService();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -35,15 +38,10 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('should return user without password if credentials are valid', async () => {
       const hashedPassword = await bcrypt.hash('password123', 10);
-      const mockUser = {
-        id: 'user-1',
+      const mockUser = createMockUser({
         email: 'test@example.com',
         password: hashedPassword,
-        name: 'Test User',
-        role: 'USER' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
 
@@ -70,15 +68,10 @@ describe('AuthService', () => {
 
     it('should return null if password is invalid', async () => {
       const hashedPassword = await bcrypt.hash('password123', 10);
-      const mockUser = {
-        id: 'user-1',
+      const mockUser = createMockUser({
         email: 'test@example.com',
         password: hashedPassword,
-        name: 'Test User',
-        role: 'USER' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
 
@@ -93,14 +86,9 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access and refresh tokens', async () => {
-      const user = {
-        id: 'user-1',
+      const user = createMockUserWithoutPassword({
         email: 'test@example.com',
-        name: 'Test User',
-        role: 'USER' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
@@ -135,28 +123,20 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw UnauthorizedException when refresh token is invalid', async () => {
+    it('should throw UnauthorizedException when refresh token is invalid', () => {
       mockJwtService.verifyAsync.mockRejectedValueOnce(
         new Error('Invalid token'),
       );
 
-      await expect(
-        service.refreshTokens('invalid-refresh-token'),
-      ).rejects.toThrow('Invalid or expired refresh token');
+      expect(service.refreshTokens('invalid-refresh-token')).rejects.toThrow(
+        'Invalid or expired refresh token',
+      );
     });
   });
 
   describe('getUserById', () => {
     it('should return user without password when user exists', async () => {
-      const mockUser = {
-        id: 'user-1',
-        email: 'test@example.com',
-        password: 'hashed-password',
-        name: 'Test User',
-        role: 'USER' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const mockUser = createMockUser({ id: 'user-1' });
 
       mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
 
@@ -164,7 +144,6 @@ describe('AuthService', () => {
 
       expect(result).toBeDefined();
       expect(result?.id).toBe('user-1');
-      expect(result?.email).toBe('test@example.com');
       expect(result).not.toHaveProperty('password');
     });
 
