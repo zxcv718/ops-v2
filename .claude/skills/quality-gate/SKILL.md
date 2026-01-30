@@ -20,7 +20,8 @@ allowed-tools: Read, Bash(npm:*), Bash(grep:*), Glob, Grep
 | 5 | ESLint | warning 0 | ✅ |
 | 6 | any 타입 없음 | 검색 결과 0 | ✅ |
 | 7 | console.log 없음 | 검색 결과 0 | ✅ |
-| 8 | TODO/FIXME 확인 | 목록 출력 | ⚠️ |
+| 8 | Swagger 문서화 | Controller/DTO 데코레이터 | ✅ |
+| 9 | TODO/FIXME 확인 | 목록 출력 | ⚠️ |
 
 ---
 
@@ -70,6 +71,46 @@ grep -r "console.log" --include="*.ts" --include="*.tsx" ops-api/src ops-web/src
 grep -rn "TODO\|FIXME" --include="*.ts" --include="*.tsx" ops-api/src ops-web/src
 ```
 
+### Step 6: Swagger 문서화 체크 (ops-api)
+
+> **중요**: 새로운/변경된 Controller와 DTO에 Swagger 데코레이터 필수
+
+**Controller 체크** - `@ApiTags`, `@ApiOperation` 필요:
+```bash
+# 변경된 Controller 파일 확인
+git diff --name-only origin/dev | grep "controller.ts"
+
+# 각 Controller에 @ApiTags 있는지 확인
+grep -L "@ApiTags" ops-api/src/modules/*/*.controller.ts 2>/dev/null
+```
+
+**DTO 체크** - `@ApiProperty` 필요:
+```bash
+# 변경된 DTO 파일 확인
+git diff --name-only origin/dev | grep "dto.ts"
+
+# DTO 파일에서 @ApiProperty 없는 속성 확인
+grep -L "@ApiProperty" ops-api/src/modules/*/dto/*.ts 2>/dev/null
+```
+
+**Swagger 데코레이터 예시**:
+```typescript
+// Controller
+@ApiTags('auth')
+@Controller('auth')
+export class AuthController {
+  @ApiOperation({ summary: '로그인' })
+  @Post('login')
+  login() {}
+}
+
+// DTO
+export class LoginDto {
+  @ApiProperty({ example: 'user@example.com' })
+  email: string;
+}
+```
+
 ---
 
 ## 사용법
@@ -96,6 +137,7 @@ grep -rn "TODO\|FIXME" --include="*.ts" --include="*.tsx" ops-api/src ops-web/sr
 | ESLint | ❌ | warning 3건 |
 | any 타입 | ✅ | 발견 0 |
 | console.log | ❌ | 발견 2건 |
+| Swagger | ✅ | Controller 3개, DTO 5개 문서화 |
 | TODO/FIXME | ⚠️ | 5건 (확인 필요) |
 
 ### 실패 상세
