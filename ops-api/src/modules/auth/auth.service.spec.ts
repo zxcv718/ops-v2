@@ -112,4 +112,68 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refreshToken', 'refresh-token');
     });
   });
+
+  describe('refreshTokens', () => {
+    it('should return new tokens when refresh token is valid', async () => {
+      const mockPayload = {
+        sub: 'user-1',
+        email: 'test@example.com',
+        role: 'USER',
+      };
+
+      mockJwtService.verifyAsync.mockResolvedValueOnce(mockPayload);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('new-access-token')
+        .mockResolvedValueOnce('new-refresh-token');
+
+      const result = await service.refreshTokens('valid-refresh-token');
+
+      expect(result).toHaveProperty('accessToken', 'new-access-token');
+      expect(result).toHaveProperty('refreshToken', 'new-refresh-token');
+      expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(
+        'valid-refresh-token',
+      );
+    });
+
+    it('should throw UnauthorizedException when refresh token is invalid', async () => {
+      mockJwtService.verifyAsync.mockRejectedValueOnce(
+        new Error('Invalid token'),
+      );
+
+      await expect(
+        service.refreshTokens('invalid-refresh-token'),
+      ).rejects.toThrow('Invalid or expired refresh token');
+    });
+  });
+
+  describe('getUserById', () => {
+    it('should return user without password when user exists', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        password: 'hashed-password',
+        name: 'Test User',
+        role: 'USER' as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
+
+      const result = await service.getUserById('user-1');
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('user-1');
+      expect(result?.email).toBe('test@example.com');
+      expect(result).not.toHaveProperty('password');
+    });
+
+    it('should return null when user does not exist', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValueOnce(null);
+
+      const result = await service.getUserById('non-existent-id');
+
+      expect(result).toBeNull();
+    });
+  });
 });
