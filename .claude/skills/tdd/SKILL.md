@@ -1,148 +1,213 @@
 ---
 name: tdd
 description: TDD 사이클 (Red-Green-Refactor) 강제. "TDD로 구현해줘", "테스트 먼저", "TDD 시작" 등의 요청에 사용
-allowed-tools: Read, Write, Edit, Bash(npm:test), Bash(npm:run), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash(npm:test), Bash(npm:run), Bash(bun:*), Glob, Grep
 ---
 
-# TDD - Test-Driven Development
+# TDD - Automated Test-Driven Development
 
 > **원칙**: 테스트 먼저, 코드는 테스트를 통과시키기 위한 최소한만
 > **언어**: 모든 결과는 **한글**로 보고
-
-## 핵심 사이클
-
-```
-┌─────────────────────────────────────────────────────┐
-│  RED → GREEN → REFACTOR → RED → GREEN → REFACTOR   │
-│   ↑                                            │    │
-│   └────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## Phase 1: RED (실패하는 테스트 작성)
-
-### 1.1 테스트 파일 생성/확인
-
-```bash
-# API (NestJS)
-ops-api/src/{module}/__tests__/{feature}.spec.ts
-
-# Web (Next.js)
-ops-web/__tests__/{feature}.test.ts
-```
-
-### 1.2 테스트 작성 규칙
-
-```typescript
-describe('기능명', () => {
-  it('should 동작 설명', async () => {
-    // Given: 초기 상태
-
-    // When: 동작 실행
-
-    // Then: 결과 검증
-    expect(result).toBe(expected);
-  });
-});
-```
-
-### 1.3 테스트 실행 - 반드시 실패 확인
-
-```bash
-cd ops-api && npm test -- --testPathPattern={feature}
-```
-
-**실패 확인 필수**: 테스트가 통과하면 잘못된 테스트임
-
----
-
-## Phase 2: GREEN (최소 코드로 통과)
-
-### 2.1 규칙
-
-- **최소한의 코드만** 작성
-- 하드코딩 OK (나중에 리팩토링)
-- 다른 테스트 케이스 생각 X (지금 테스트만 통과)
-
-### 2.2 테스트 실행 - 통과 확인
-
-```bash
-npm test -- --testPathPattern={feature}
-```
-
-**통과해야 다음 단계**
-
----
-
-## Phase 3: REFACTOR (코드 개선)
-
-### 3.1 규칙
-
-- 테스트는 **계속 통과** 상태 유지
-- 중복 제거
-- 네이밍 개선
-- 구조 개선
-
-### 3.2 리팩토링 후 테스트
-
-```bash
-npm test -- --testPathPattern={feature}
-```
-
-**여전히 통과해야 함**
-
----
-
-## 다음 사이클
-
-```
-Phase 1 완료 → Phase 2 완료 → Phase 3 완료
-                                    ↓
-                              다음 테스트 케이스
-                                    ↓
-                            Phase 1 (RED) 시작
-```
-
----
+> **모드**: Automated (각 단계 자동 실행, 실패 시 중단)
 
 ## 사용법
 
 ```
-/tdd "사용자 로그인 기능"
-/tdd "알림 생성 API"
-```
-
-## 진행 보고 형식
-
-각 사이클 완료 시:
-
-```
-## TDD Cycle #1
-
-### RED
-- 테스트: `it('should create notification')`
-- 상태: ❌ 실패 (expected)
-
-### GREEN
-- 구현: `NotificationService.create()`
-- 상태: ✅ 통과
-
-### REFACTOR
-- 변경: 중복 코드 추출
-- 상태: ✅ 통과 유지
-
----
-다음 테스트 케이스로 진행?
+/tdd "기능명"
+/tdd "Guardian 생성 API"
+/tdd "Ward 목록 조회"
 ```
 
 ---
 
-## 금지 사항
+## Automated TDD 사이클
 
-1. ❌ 테스트 없이 코드 작성
-2. ❌ 한 번에 여러 테스트 작성
-3. ❌ RED 단계에서 테스트 통과
-4. ❌ REFACTOR에서 테스트 실패
-5. ❌ 다음 기능 미리 구현
+```
+┌────────────────────────────────────────────────────────────┐
+│                    /tdd "기능명"                            │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  1. 테스트 케이스 분석                                      │
+│     └── 기능을 테스트 케이스로 분해                         │
+│                                                            │
+│  2. Cycle Loop (각 테스트 케이스마다)                       │
+│     ┌─────────────────────────────────────────────────┐    │
+│     │  RED: 테스트 작성 → 실행 → 실패 확인              │    │
+│     │       └── 실패 안 하면? → 테스트 수정             │    │
+│     │                                                   │    │
+│     │  GREEN: 최소 코드 작성 → 실행 → 통과 확인         │    │
+│     │         └── 통과 안 하면? → 코드 수정             │    │
+│     │                                                   │    │
+│     │  REFACTOR: 코드 개선 → 실행 → 통과 유지 확인      │    │
+│     │            └── 실패하면? → 롤백                   │    │
+│     └─────────────────────────────────────────────────┘    │
+│                         ↓                                  │
+│  3. 완료 보고                                              │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Step 1: 테스트 케이스 분석
+
+기능 요구사항을 테스트 케이스로 분해:
+
+```
+기능: "Guardian 생성 API"
+
+테스트 케이스:
+1. 정상 생성 - Guardian 생성 성공
+2. 중복 확인 - 이미 존재하는 userId로 생성 시 에러
+3. 필수값 검증 - userId 없으면 에러
+```
+
+---
+
+## Step 2: TDD Cycle (반복)
+
+### 2.1 RED: 테스트 작성 → 실패 확인
+
+```typescript
+// ops-api/src/modules/guardian/guardian.service.spec.ts
+import { createMockGuardian, createMockPrismaService } from '../../../test/factories/index.js';
+
+describe('GuardianService', () => {
+  it('should create guardian successfully', async () => {
+    // Given
+    const dto = { userId: 'user-1', phoneNumber: '010-1234-5678' };
+
+    // When
+    const result = await service.create(dto);
+
+    // Then
+    expect(result.userId).toBe('user-1');
+  });
+});
+```
+
+**실행**:
+```bash
+cd ops-api && bun test --testPathPattern=guardian.service
+```
+
+**확인**:
+- ❌ 실패해야 함 (아직 구현 안 됨)
+- ✅ 통과하면? → 테스트가 잘못됨, 수정 필요
+
+---
+
+### 2.2 GREEN: 최소 코드 → 통과 확인
+
+```typescript
+// guardian.service.ts
+async create(dto: CreateGuardianDto): Promise<Guardian> {
+  return this.prisma.guardian.create({
+    data: dto,
+  });
+}
+```
+
+**실행**:
+```bash
+cd ops-api && bun test --testPathPattern=guardian.service
+```
+
+**확인**:
+- ✅ 통과해야 함
+- ❌ 실패하면? → 코드 수정
+
+---
+
+### 2.3 REFACTOR: 개선 → 통과 유지
+
+```typescript
+// 개선: 에러 처리 추가
+async create(dto: CreateGuardianDto): Promise<Guardian> {
+  const existing = await this.prisma.guardian.findUnique({
+    where: { userId: dto.userId },
+  });
+
+  if (existing) {
+    throw new ConflictException('Guardian already exists');
+  }
+
+  return this.prisma.guardian.create({ data: dto });
+}
+```
+
+**실행**:
+```bash
+cd ops-api && bun test --testPathPattern=guardian.service
+```
+
+**확인**:
+- ✅ 여전히 통과해야 함
+- ❌ 실패하면? → 리팩토링 롤백
+
+---
+
+## Step 3: 완료 보고
+
+```
+## TDD 완료: Guardian 생성 API
+
+### 테스트 케이스
+| # | 케이스 | 상태 |
+|---|--------|------|
+| 1 | 정상 생성 | ✅ |
+| 2 | 중복 에러 | ✅ |
+| 3 | 필수값 검증 | ✅ |
+
+### TDD Cycles
+- Cycle 1: create() 기본 구현
+- Cycle 2: 중복 체크 추가
+- Cycle 3: DTO 검증 추가
+
+### 파일
+- guardian.service.spec.ts (3 tests)
+- guardian.service.ts (create method)
+
+### 커버리지
+- GuardianService: 100%
+```
+
+---
+
+## 자동 실행 규칙
+
+1. **RED 실패 필수**: 테스트가 통과하면 진행 중단, 테스트 수정
+2. **GREEN 통과 필수**: 코드가 실패하면 진행 중단, 코드 수정
+3. **REFACTOR 통과 유지**: 실패하면 롤백
+
+---
+
+## Mock Factory 사용 (필수)
+
+```typescript
+import {
+  createMockUser,
+  createMockGuardian,
+  createMockWard,
+  createMockCall,
+} from '../../../test/factories/index.js';
+
+import {
+  createMockPrismaService,
+  createMockJwtService,
+} from '../../../test/utils/test-helper.js';
+```
+
+---
+
+## 테스트 명명 규칙
+
+```typescript
+describe('ClassName', () => {
+  describe('methodName', () => {
+    it('should 성공 동작', () => {});
+    it('should throw Error when 실패 조건', () => {});
+    it('should return null when 조건', () => {});
+  });
+});
+```
