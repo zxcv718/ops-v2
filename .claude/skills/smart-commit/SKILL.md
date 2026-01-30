@@ -31,11 +31,15 @@ allowed-tools: Read, Bash(git:*), Bash(gh:*)
    ├── 치명적 이슈 있음 → 커밋 중단, 수정 권고
    └── 치명적 이슈 없음 → 4단계로 진행
       ↓
-4. 커밋 진행
+4. 커밋 + PR 생성 (리뷰 결과 포함)
+      ↓
+5. 치명적 이슈 0건 → 자동 Squash Merge
 ```
 
-> **중요**: `--review` 플래그 사용 시 반드시 `Skill` 도구로 `/code-review`를 호출해야 합니다.
-> 치명적 이슈가 1건이라도 있으면 커밋을 중단하고 사용자에게 수정을 권고합니다.
+> **중요**:
+> - `--review` 플래그 사용 시 반드시 `Skill` 도구로 `/code-review`를 호출해야 합니다.
+> - 치명적 이슈가 1건이라도 있으면 커밋을 중단하고 사용자에게 수정을 권고합니다.
+> - **치명적 이슈 0건이면 PR 생성 후 자동으로 Squash Merge**합니다.
 
 ---
 
@@ -124,15 +128,56 @@ PR_URL=$(gh pr view --json url,state --jq 'select(.state == "OPEN") | .url' 2>/d
 ## 6-A. PR 신규 생성
 
 1. 브랜치명에서 이슈 번호 추출
-2. PR 본문 작성 (한글)
+2. PR 본문 작성 (한글, 코드 리뷰 결과 포함)
 3. `gh pr create --base dev`
+
+**PR 본문 템플릿** (`--review` 사용 시):
+
+```markdown
+## Summary
+- 변경 내용 요약
+
+## Related Issue
+Closes #이슈번호
+
+## Code Review 결과
+| 항목 | 결과 |
+|------|------|
+| 치명적 | 0건 ✅ |
+| 경고 | N건 |
+| 제안 | N건 |
+
+### 경고 사항 (있는 경우)
+- 파일:라인 - 내용
+
+## Test Plan
+- [ ] 테스트 항목
+```
 
 ## 6-B. 기존 PR 업데이트
 
 1. 변경 내역 분석
 2. `gh pr edit` 로 본문 업데이트
 
-## 7. 최종 보고
+## 7. Auto Merge (--review 사용 시)
+
+> **치명적 이슈 0건일 때만 자동 실행**
+
+```bash
+gh pr merge --squash --delete-branch
+```
+
+**조건**:
+- `--review` 플래그 사용
+- 치명적 이슈 0건
+- PR 생성/업데이트 완료
+
+**Squash Merge 이유**:
+- 커밋 히스토리 정리
+- Feature 브랜치의 여러 커밋을 하나로 합침
+- dev 브랜치 히스토리 깔끔하게 유지
+
+## 8. 최종 보고
 
 | 항목 | 값 |
 |------|-----|
@@ -141,3 +186,5 @@ PR_URL=$(gh pr view --json url,state --jq 'select(.state == "OPEN") | .url' 2>/d
 | Rebase | O / X (origin/dev 기준) |
 | PR 상태 | 신규 생성 / 업데이트 / 변경없음 |
 | PR URL | `<URL>` |
+| Code Review | 치명적 N건, 경고 N건 |
+| Auto Merge | O / X (치명적 0건 시 자동) |
