@@ -3,6 +3,27 @@
 > 상세 문서: `@.claude/docs/` 참조
 > 기존 코드 참조: `/home/ilim/ops/` (ops-api, ops-web, ops-agent)
 
+## 🔴 Remake 계획 문서 (필독!)
+
+**Source of Truth**: `/home/ilim/ops/OPS_REMAKE_PLAN.md`
+
+```
+⚠️ 작업 전 반드시 해당 Phase 섹션 확인!
+⚠️ 구현 세부사항, 체크리스트는 Remake 문서 기준
+⚠️ CLAUDE.md와 Remake 문서 불일치 시 → Remake 문서가 우선
+⚠️ Remake 문서 변경 시 → CLAUDE.md도 즉시 동기화
+```
+
+| Phase | 섹션 | 주요 내용 |
+|-------|------|----------|
+| P1 인프라 | 섹션 3 | GCP, K8s, CI/CD |
+| P2 API | 섹션 4 | NestJS, TDD, Swagger, 테스트 |
+| P3 Web | 섹션 5 | Next.js, FSD 아키텍처 |
+| P4 Agent | 섹션 6 | Python, LiveKit |
+| P5 통합 | 섹션 7 | E2E 테스트, 검증 |
+
+---
+
 ## 프로젝트 구조
 
 | 저장소 | 기술 | 포트 |
@@ -194,4 +215,3 @@ Tasks (2 done, 2 open)
 
 - 기술 스택: `@.agent/workflows/tech-stack.md`
 - 도메인 용어: `@.agent/workflows/domain-glossary.md`
-- Remake 계획: `/home/ilim/ops/OPS_REMAKE_PLAN.md`
