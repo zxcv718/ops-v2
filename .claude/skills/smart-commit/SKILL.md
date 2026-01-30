@@ -163,8 +163,30 @@ Closes #이슈번호
 
 > **치명적 이슈 0건일 때만 자동 실행**
 
+### 7.1 Squash 커밋 메시지 작성
+
+**형식**:
+```
+<type>(<scope>): <한글 설명> (#PR번호)
+
+- 주요 변경사항 1
+- 주요 변경사항 2
+- 주요 변경사항 3
+```
+
+**규칙**:
+- `subject`: PR 제목 + PR 번호 (예: `feat(auth): JWT 인증 모듈 구현 (#11)`)
+- `body`: 핵심 변경사항만 bullet point로 (3-5줄)
+- **제외**: `Closes #N`, 코드 리뷰 결과, 테스트 계획 등 PR 메타데이터
+
+### 7.2 Squash Merge 실행
+
 ```bash
-gh pr merge --squash --delete-branch
+gh pr merge --squash --delete-branch \
+  --subject "<type>(<scope>): <설명> (#${PR_NUMBER})" \
+  --body "- 변경사항 1
+- 변경사항 2
+- 변경사항 3"
 ```
 
 **조건**:
