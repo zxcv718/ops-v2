@@ -11,6 +11,20 @@ enum Role {
   ADMIN
 }
 
+enum CallStatus {
+  PENDING
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  NO_ANSWER
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -20,5 +34,86 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  guardian Guardian?
+
   @@map("users")
+}
+
+model Guardian {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  phoneNumber String?  @map("phone_number")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wards Ward[]
+
+  @@map("guardians")
+}
+
+model Ward {
+  id          String   @id @default(cuid())
+  guardianId  String   @map("guardian_id")
+  name        String
+  phoneNumber String   @map("phone_number")
+  birthDate   DateTime? @map("birth_date")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  calls    Call[]
+
+  @@map("wards")
+}
+
+model Call {
+  id          String        @id @default(cuid())
+  wardId      String        @map("ward_id")
+  roomName    String?       @map("room_name")
+  status      CallStatus    @default(PENDING)
+  direction   CallDirection @default(OUTBOUND)
+  startedAt   DateTime?     @map("started_at")
+  endedAt     DateTime?     @map("ended_at")
+  durationSec Int?          @map("duration_sec")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  ward        Ward          @relation(fields: [wardId], references: [id], onDelete: Cascade)
+  transcripts Transcript[]
+  summary     CallSummary?
+
+  @@index([wardId])
+  @@index([status])
+  @@map("calls")
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  callId    String   @map("call_id")
+  speaker   String
+  text      String
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@index([callId])
+  @@map("transcripts")
+}
+
+model CallSummary {
+  id           String   @id @default(cuid())
+  callId       String   @unique @map("call_id")
+  summary      String
+  mood         String?
+  healthStatus String?  @map("health_status")
+  concerns     String[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@map("call_summaries")
 }

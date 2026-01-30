@@ -24,3 +24,6 @@ dist
 
 # Coverage
 coverage
+
+# Local scripts
+scripts
