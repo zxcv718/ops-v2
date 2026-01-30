@@ -29,10 +29,11 @@ allowed-tools: Read, Write, Edit, Bash(git:*), Bash(gh:*), Bash(npm:*), Glob, Gr
 │  └── 빌드, 테스트, 커버리지, lint 체크                               │
 │                                                                     │
 │  Phase 4: /smart-commit --review                                    │
-│  └── 코드 리뷰 → 커밋 → rebase → push → PR 생성                     │
+│  └── /code-review 호출 → 커밋 → rebase → push → PR 생성             │
+│      (치명적 이슈 시 중단)                                           │
 │                                                                     │
 │  Phase 5: 완료 보고                                                  │
-│  └── PR URL, 변경 파일 목록                                         │
+│  └── PR URL, 변경 파일 목록, 코드 리뷰 결과                          │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -147,13 +148,22 @@ Quality Gate 실패 항목:
 
 ```
 /smart-commit --review 흐름:
-1. 코드 리뷰 실행
-2. 치명적 이슈 없으면 진행
-3. git add + commit
-4. git fetch origin dev && git rebase origin/dev
-5. git push
-6. gh pr create --base dev
+
+1. /code-review 스킬 호출 (시니어 개발자 관점 리뷰)
+   ├── 치명적 이슈 → 커밋 중단, Phase 2로 돌아가 수정
+   └── 치명적 이슈 없음 → 계속 진행
+         ↓
+2. git add + commit
+         ↓
+3. git fetch origin dev && git rebase origin/dev
+         ↓
+4. git push
+         ↓
+5. gh pr create --base dev
 ```
+
+> **중요**: `--review` 플래그는 `/code-review` 스킬을 내부적으로 호출합니다.
+> 치명적 이슈 발견 시 커밋이 중단되며, 수정 후 다시 시도해야 합니다.
 
 ### 4.2 PR 생성
 
@@ -201,6 +211,7 @@ EOF
 | 테스트 | ✅ (15 passed) |
 | 커버리지 | ✅ (85%) |
 | Quality Gate | ✅ PASS |
+| Code Review | ✅ 치명적 0건, 경고 N건 |
 
 ### Tasks
 4/4 완료
