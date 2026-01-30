@@ -29,10 +29,12 @@ allowed-tools: Read, Write, Edit, Bash(git:*), Bash(gh:*), Bash(npm:*), Glob, Gr
 │  └── 빌드, 테스트, 커버리지, lint 체크                               │
 │                                                                     │
 │  Phase 4: /smart-commit --review                                    │
-│  └── 코드 리뷰 → 커밋 → rebase → push → PR 생성                     │
+│  └── /code-review → 커밋 → PR (리뷰 결과 포함)                       │
+│      ├── 치명적 이슈 → 중단                                          │
+│      └── 치명적 0건 → Auto Squash Merge ✅                          │
 │                                                                     │
 │  Phase 5: 완료 보고                                                  │
-│  └── PR URL, 변경 파일 목록                                         │
+│  └── Merge 완료, Issue 자동 Close                                    │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -141,19 +143,31 @@ Quality Gate 실패 항목:
 
 ---
 
-## Phase 4: 커밋 & PR
+## Phase 4: 커밋 & PR & Auto Merge
 
 ### 4.1 /smart-commit --review 실행
 
 ```
 /smart-commit --review 흐름:
-1. 코드 리뷰 실행
-2. 치명적 이슈 없으면 진행
-3. git add + commit
-4. git fetch origin dev && git rebase origin/dev
-5. git push
-6. gh pr create --base dev
+
+1. /code-review 스킬 호출 (시니어 개발자 관점 리뷰)
+   ├── 치명적 이슈 → 커밋 중단, Phase 2로 돌아가 수정
+   └── 치명적 이슈 없음 → 계속 진행
+         ↓
+2. git add + commit
+         ↓
+3. git fetch origin dev && git rebase origin/dev
+         ↓
+4. git push
+         ↓
+5. gh pr create --base dev (코드 리뷰 결과 포함)
+         ↓
+6. 치명적 이슈 0건 → gh pr merge --squash --delete-branch
 ```
+
+> **중요**:
+> - 치명적 이슈 발견 시 커밋이 중단되며, 수정 후 다시 시도해야 합니다.
+> - **치명적 이슈 0건이면 자동 Squash Merge** (브랜치 자동 삭제)
 
 ### 4.2 PR 생성
 
@@ -179,14 +193,14 @@ EOF
 ## Phase 5: 완료 보고
 
 ```
-## Full Cycle 완료
+## Full Cycle 완료 ✅
 
 ### GitHub
 | 항목 | 값 |
 |------|-----|
-| Issue | #${ISSUE_NUM} - ${TITLE} |
-| Branch | feature/${ISSUE_NUM}-<desc> |
-| PR | #${PR_NUM} - ${PR_URL} |
+| Issue | #${ISSUE_NUM} - ${TITLE} (Closed) |
+| Branch | feature/${ISSUE_NUM}-<desc> (삭제됨) |
+| PR | #${PR_NUM} - Merged (Squash) |
 
 ### 변경 파일
 - ops-api/src/notification/notification.entity.ts
@@ -201,6 +215,8 @@ EOF
 | 테스트 | ✅ (15 passed) |
 | 커버리지 | ✅ (85%) |
 | Quality Gate | ✅ PASS |
+| Code Review | ✅ 치명적 0건, 경고 N건 |
+| Auto Merge | ✅ Squash Merged |
 
 ### Tasks
 4/4 완료
@@ -210,7 +226,7 @@ EOF
 ✓ #4 UI 컴포넌트
 
 ---
-PR 리뷰 후 머지하세요: ${PR_URL}
+🎉 dev 브랜치에 머지 완료!
 ```
 
 ---

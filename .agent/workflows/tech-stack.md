@@ -18,16 +18,26 @@
 
 | 레이어 | 기술 | 버전 |
 |--------|------|------|
+| Runtime | Bun | 1.x |
 | Framework | NestJS | 11.x |
 | ORM | Prisma | 5.x |
 | Database | PostgreSQL | 16.x |
 | Cache | Redis | 7.x |
 | Language | TypeScript | 5.x |
+| Test | Bun Test | (built-in) |
 
 ### 주요 의존성
 - `@nestjs/jwt` - JWT 인증
 - `livekit-server-sdk` - LiveKit API
 - `@apns2/core` - Apple Push Notification
+
+### 명령어
+```bash
+bun install    # 의존성 설치
+bun run build  # 빌드
+bun test       # 테스트
+bun run start  # 서버 실행
+```
 
 ---
 
