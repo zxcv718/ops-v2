@@ -121,6 +121,20 @@
 - 커밋: `feat(scope): 설명`, `fix(scope): 설명`
 - rebase 필수: push 전 `git rebase origin/dev`
 
+### ⚠️ Git 저장소 루트 주의
+
+```
+/home/ilim/ops-v2/    ← .git 위치 (저장소 루트)
+├── ops-api/
+├── ops-web/
+└── ops-agent/
+```
+
+**git 명령 실행 시 반드시 저장소 루트 기준 경로 사용**:
+- ❌ `ops-api/` 에서 `git add ops-api/file.ts` → 경로 오류
+- ✅ `ops-api/` 에서 `git add file.ts` (상대 경로)
+- ✅ 루트에서 `git add ops-api/file.ts` (절대 경로)
+
 ---
 
 ## Skills 목록
