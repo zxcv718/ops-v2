@@ -91,15 +91,24 @@ git checkout -b feature/${ISSUE_NUM}-<short-description>
 | **M** | 신규 컴포넌트 (3-5 파일) | `/supervisor` 호출 |
 | **L** | 아키텍처 변경 (5+ 파일) | `/supervisor` 호출 |
 
-### 2.2 S 규모: 직접 TDD 구현
+### 2.2 S 규모: /tdd 스킬 호출
+
+> **중요**: Service 파일 구현 시 반드시 `/tdd` 스킬 호출
 
 ```
-TDD Cycle:
-1. RED: 테스트 작성 → 실패 확인
-2. GREEN: 최소 코드로 통과
-3. REFACTOR: 코드 개선
+Skill 도구 호출:
+  skill: "tdd"
+  args: "기능명"
+```
 
-반복...
+```
+/tdd 자동 실행:
+1. 테스트 케이스 분석
+2. Cycle Loop (각 케이스마다):
+   - RED: 테스트 작성 → 실패 확인
+   - GREEN: 최소 코드 → 통과 확인
+   - REFACTOR: 개선 → 통과 유지
+3. 완료 보고
 ```
 
 ### 2.3 M/L 규모: /supervisor 호출
