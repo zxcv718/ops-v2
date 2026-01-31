@@ -8,6 +8,7 @@ allowed-tools: Read, Glob, Grep, Bash(grep:*)
 
 > **목적**: 코드베이스에서 잠재적 버그 패턴 자동 탐지
 > **언어**: 모든 결과는 **한글**로 보고
+> **Extended Thinking**: 각 발견 항목의 심각도와 영향 범위를 깊이 분석하세요.
 
 ## 탐지 패턴
 

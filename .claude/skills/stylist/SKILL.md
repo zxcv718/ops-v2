@@ -110,3 +110,17 @@ app/
 
 - Web UI 스펙: `@.claude/docs/web-ui-spec.md`
 - 기술 스택: `@.agent/workflows/tech-stack.md`
+
+---
+
+## NOT TO DO
+
+- `pages/` 디렉토리 사용 (App Router만)
+- 불필요한 `'use client'` 추가 (Server Component 우선)
+- `<img>` 태그 사용 (`next/image` 대신)
+- `any` 타입 사용
+- `console.log` 사용
+- feature 내부 구현 직접 export (index.ts의 Public API만)
+- entities/에서 features/ import (의존 역전)
+- app/ 페이지에서 직접 API 호출 (features/ 통해서)
+- 인라인 스타일 사용 (Tailwind 대신)

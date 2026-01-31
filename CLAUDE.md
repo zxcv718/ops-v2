@@ -1,143 +1,83 @@
 # OPS v2 Project - 필수 규칙
 
-> 상세 문서: `@.claude/docs/` 참조
-> 기존 코드 참조: `/home/ilim/ops/` (ops-api, ops-web, ops-agent)
-
-## 🔴 Remake 계획 문서 (필독!)
-
-**Source of Truth**: `/home/ilim/ops/OPS_REMAKE_PLAN.md`
-
-```
-⚠️ 작업 전 반드시 해당 Phase 섹션 확인!
-⚠️ 구현 세부사항, 체크리스트는 Remake 문서 기준
-⚠️ CLAUDE.md와 Remake 문서 불일치 시 → Remake 문서가 우선
-⚠️ Remake 문서 변경 시 → CLAUDE.md도 즉시 동기화
-```
-
-| Phase | 섹션 | 주요 내용 |
-|-------|------|----------|
-| P1 인프라 | 섹션 3 | GCP, K8s, CI/CD |
-| P2 API | 섹션 4 | NestJS, TDD, Swagger, 테스트 |
-| P3 Web | 섹션 5 | Next.js, FSD 아키텍처 |
-| P4 Agent | 섹션 6 | Python, LiveKit |
-| P5 통합 | 섹션 7 | E2E 테스트, 검증 |
+> **Source of Truth**: `/home/ilim/ops/OPS_REMAKE_PLAN.md`
+> **도메인별 규칙**: 각 디렉토리의 `CLAUDE.md` 참조
 
 ---
 
 ## 프로젝트 구조
 
-| 저장소 | 기술 | 포트 |
-|--------|------|------|
-| ops-api | NestJS + Prisma + PostgreSQL | 3000 |
-| ops-web | Next.js 16 (App Router) | 3001 |
-| ops-agent | Python + LiveKit Agents | - |
-
-## 절대 금지
-
-- `main`/`dev` 직접 push 금지
-- `console.log` 금지 → `Logger` 사용
-- 커밋 메시지에 AI 표시 금지 (`Co-Authored-By: Claude` 등)
-- `any` 타입 금지
-- Entity 직접 반환 금지 → DTO 변환
-- Controller에서 비즈니스 로직 금지
-- **테스트 없이 API 코드 작성 금지 (TDD 필수)**
+| 저장소 | 기술 | 포트 | 규칙 |
+|--------|------|------|------|
+| ops-api | NestJS + Prisma + PostgreSQL | 3000 | `ops-api/CLAUDE.md` |
+| ops-web | Next.js 16 (App Router) | 3001 | `ops-web/CLAUDE.md` |
+| ops-agent | Python + LiveKit Agents | - | `ops-agent/CLAUDE.md` |
 
 ---
 
-## 통합 워크플로우
+## 핵심 원칙
 
-### 기능 구현 흐름
+### 필수 사항
+- PR base는 `dev` 브랜치 사용
+- Logger 사용 (NestJS Logger, Python logging)
+- 구체적 타입 명시
+- Entity → DTO 변환하여 반환
+- Service 레이어 TDD 적용
+- 커버리지 80% 이상 유지
 
+### 워크플로우
 ```
 /full-cycle #이슈번호
     ↓
 1. /start-work (브랜치 생성)
     ↓
-2. T-shirt Sizing
-   ├── S: 직접 TDD 구현
-   └── M/L: /supervisor 호출
-           └── Claude Tasks 생성 (의존성)
-           └── subagents 병렬 실행
+2. T-shirt Sizing → S: 직접 TDD / M,L: /supervisor
     ↓
 3. /quality-gate (품질 체크)
     ↓
 4. /smart-commit --review (PR 생성)
-    ↓
-5. 완료 (GitHub Issue 자동 닫힘)
 ```
 
-### 2-Layer 관리
+### T-shirt Sizing
+
+| 규모 | 정의 | 프로세스 |
+|------|------|----------|
+| **S** | 1-2 파일 | 직접 TDD |
+| **M** | 3-5 파일 | /supervisor → 1-2 subagent |
+| **L** | 5+ 파일 | /supervisor → 2-4+ subagent |
+
+---
+
+## 컨텍스트 관리
+
+### Compact 권장 시점
+- `/supervisor` 실행 전: 깨끗한 상태로 Plan 작성
+- 긴 에러 로그 출력 후: 불필요한 스택트레이스 제거
+- subagent 3개 이상 완료 후: 누적 출력 정리
+- 세션 30분 이상 경과 시
+
+### 2-Layer 작업 관리
 
 | 레이어 | 도구 | 용도 |
 |--------|------|------|
-| 외부 | GitHub Issues + Projects | Epic/Feature 기록, PR 연결 |
+| 외부 | GitHub Issues | Epic/Feature 기록, PR 연결 |
 | 내부 | Claude Tasks | subagent 의존성, 세션 연속성 |
 
 ---
 
-## 개발 방법론
+## Git 규칙
 
-### TDD 정책
+- 브랜치: `feature/<이슈번호>-<설명>`, `fix/<이슈번호>-<설명>`
+- 커밋: `feat(scope): 설명`, `fix(scope): 설명`
+- push 전 rebase: `git rebase origin/dev`
 
-| 대상 | TDD | 비고 |
-|------|-----|------|
-| Service (비즈니스 로직) | ✅ 필수 | `/tdd` 스킬 사용 권장 |
-| Controller | ⚠️ 권장 | 통합 테스트로 대체 가능 |
-| Entity, DTO, Module | ❌ 해당없음 | 설정 코드 |
-
-**TDD 사이클**:
+### 저장소 루트 주의
 ```
-1. RED: 실패하는 테스트 먼저
-2. GREEN: 최소 코드로 통과
-3. REFACTOR: 코드 개선
+/home/ilim/ops-v2/    ← .git 위치
+├── ops-api/
+├── ops-web/
+└── ops-agent/
 ```
-
-**Mock Factory 사용** (`test/factories/`):
-```typescript
-import { createMockUser, createMockGuardian } from '../../../test/factories/index.js';
-
-const user = createMockUser({ email: 'test@example.com' });
-const guardian = createMockGuardian({ userId: user.id });
-```
-
-**Quality Gate에서 검증**:
-- 모든 `.service.ts`에 대응하는 `.service.spec.ts` 필수
-- 커버리지 80% 이상
-
-### 품질 체크 (PR 전 필수)
-
-```
-/quality-gate
-
-체크 항목:
-- 빌드 성공
-- 테스트 통과
-- 커버리지 80%+
-- any 타입 없음
-- console.log 없음
-```
-
-### 버그 탐지
-
-```
-/bug-hunter ops-api
-```
-
-### 레거시 리팩토링
-
-```
-/characterization-test "대상 코드"
-```
-
----
-
-## T-shirt Sizing
-
-| 규모 | 정의 | 프로세스 |
-|------|------|----------|
-| **S** | 단순 수정 (1-2 파일) | 직접 TDD → 빌드 확인 |
-| **M** | 신규 컴포넌트 (3-5 파일) | /supervisor → 1-2 subagent |
-| **L** | 아키텍처 변경 (5+ 파일) | /supervisor → 2-4+ subagent |
 
 ---
 
@@ -152,83 +92,36 @@ const guardian = createMockGuardian({ userId: user.id });
 
 ---
 
-## Git 규칙
+## Skills
 
-- PR base는 항상 `dev` (main 금지)
-- 브랜치: `feature/<이슈번호>-<설명>`, `fix/<이슈번호>-<설명>`
-- 커밋: `feat(scope): 설명`, `fix(scope): 설명`
-- rebase 필수: push 전 `git rebase origin/dev`
+### 워크플로우
+| Skill | 용도 |
+|-------|------|
+| `/full-cycle` | Issue → PR 전체 자동화 |
+| `/supervisor` | 규모 판단 + Tasks + subagents |
+| `/start-work` | 브랜치 생성 |
+| `/smart-commit` | 커밋 + PR |
 
-### ⚠️ Git 저장소 루트 주의
+### 품질
+| Skill | 용도 |
+|-------|------|
+| `/tdd` | TDD 사이클 |
+| `/quality-gate` | PR 전 품질 체크 |
+| `/pattern-check` | 패턴 준수 검사 |
+| `/bug-hunter` | 버그 패턴 탐지 |
 
-```
-/home/ilim/ops-v2/    ← .git 위치 (저장소 루트)
-├── ops-api/
-├── ops-web/
-└── ops-agent/
-```
-
-**git 명령 실행 시 반드시 저장소 루트 기준 경로 사용**:
-- ❌ `ops-api/` 에서 `git add ops-api/file.ts` → 경로 오류
-- ✅ `ops-api/` 에서 `git add file.ts` (상대 경로)
-- ✅ 루트에서 `git add ops-api/file.ts` (절대 경로)
-
----
-
-## Skills 목록
-
-### 워크플로우 (메인)
-
-| Skill | 용도 | 언제 사용 |
-|-------|------|----------|
-| `/full-cycle` | Issue → PR 전체 자동화 | 기능 구현 시작 |
-| `/supervisor` | 규모 판단 + Tasks + subagents | M/L 규모 구현 |
-| `/start-work` | 이슈 선택 + 브랜치 생성 | 작업 시작 |
-| `/smart-commit` | 커밋 + PR 생성 | 구현 완료 후 |
-
-### 품질 관리
-
-| Skill | 용도 | 언제 사용 |
-|-------|------|----------|
-| `/tdd` | TDD 사이클 강제 | API 구현 시 (필수) |
-| `/quality-gate` | PR 전 품질 체크 | PR 생성 전 (필수) |
-| `/bug-hunter` | 버그 패턴 탐지 | 코드 리뷰 시 |
-| `/characterization-test` | 레거시 동작 캡처 | 리팩토링 전 |
-| `/code-review` | 코드 리뷰 | PR 리뷰 시 |
-
-### Subagent 역할
-
-| Agent | 역할 | 참조 문서 |
-|-------|------|----------|
-| Architect | 백엔드 구현 (TDD 필수) | `@.agent/workflows/architect.md` |
-| Stylist | 프론트엔드 구현 | `@.agent/workflows/stylist.md` |
-| Auditor | 빌드/테스트 검증 | `@.agent/workflows/auditor.md` |
-| Refiner | 버그 수정, 최적화 | `@.agent/workflows/refiner.md` |
-
----
-
-## Claude Tasks 활용
-
-### 세션 간 공유
-
-```bash
-# 같은 Task List로 여러 세션 실행
-CLAUDE_CODE_TASK_LIST_ID=ops-feature-12 claude
-```
-
-### Tasks 예시
-
-```
-Tasks (2 done, 2 open)
-✓ #1 Entity 정의
-✓ #2 Service 구현
-□ #3 Controller 구현 > blocked by #2
-□ #4 UI 컴포넌트 > blocked by #3
-```
+### Subagent
+| Agent | 역할 |
+|-------|------|
+| Architect | 백엔드 (TDD 필수) |
+| Stylist | 프론트엔드 |
+| Auditor | 검증 |
+| Refiner | 수정/최적화 |
 
 ---
 
 ## 참조 문서
 
-- 기술 스택: `@.agent/workflows/tech-stack.md`
-- 도메인 용어: `@.agent/workflows/domain-glossary.md`
+- **Remake 계획**: `/home/ilim/ops/OPS_REMAKE_PLAN.md`
+- **도메인별 규칙**: `ops-api/CLAUDE.md`, `ops-web/CLAUDE.md`, `ops-agent/CLAUDE.md`
+- **워크플로우 상세**: `.claude/docs/workflow-improvement-proposal.md`

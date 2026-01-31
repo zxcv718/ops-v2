@@ -50,11 +50,20 @@ allowed-tools: Read, Glob, Grep, Task, TaskCreate, TaskUpdate, TaskList, AskUser
 
 ## Step 2-3: 분석 및 T-shirt Sizing
 
+> **Extended Thinking**: 복잡한 요청일수록 깊이 생각하세요.
+> "Think step by step about the scope, dependencies, and potential risks."
+
 | 규모 | 정의 | subagent 전략 |
 |------|------|---------------|
 | **S** | 단순 수정 (1-2 파일) | subagent 불필요, 직접 TDD 처리 |
 | **M** | 신규 컴포넌트 (3-5 파일) | 1-2개 subagent |
 | **L** | 아키텍처 변경 (5+ 파일) | 필요한 만큼 (일반적으로 2-4개) |
+
+### Extended Thinking 적용 시점
+- 규모 판단이 애매할 때
+- 여러 도메인에 걸친 변경일 때
+- 기존 코드 수정이 많을 때
+- 의존성이 복잡할 때
 
 ---
 
@@ -284,3 +293,16 @@ Task ID: #{task_id}
 3. **TDD 필수**: API는 반드시 TDD (Red-Green-Refactor)
 4. **의존성 확인**: 순차 실행이 필요한 작업은 blockedBy 설정
 5. **결과 통합**: 모든 subagent 완료 후 빌드/테스트로 최종 검증
+
+---
+
+## NOT TO DO
+
+- S 규모를 M/L로 과대평가 (불필요한 복잡성)
+- 의존성 없는 Task를 blockedBy로 연결 (병렬 실행 방해)
+- 한 subagent에 불균형한 작업량 할당
+- Plan 없이 바로 subagent 실행
+- 사용자 승인 없이 구현 시작
+- API 인터페이스 정의 없이 UI 작업 시작
+- subagent 실패 무시하고 다음 단계 진행
+- /quality-gate 스킵하고 커밋

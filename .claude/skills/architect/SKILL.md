@@ -114,3 +114,25 @@ class ExampleHandler:
 - API 스펙: `@.claude/docs/api-db-spec.md`
 - Agent 스펙: `@.claude/docs/agent-spec.md`
 - DB 스키마: `@ops-api/prisma/schema.prisma`
+
+---
+
+## NOT TO DO
+
+### ops-api
+- Controller에서 Repository 직접 호출
+- Service에서 Response 객체 직접 반환
+- `any` 타입 사용
+- `console.log` 사용
+- Entity를 Controller에서 직접 반환
+- 테스트 없이 Service 코드 작성
+- God Object 패턴 (하나의 서비스에 모든 로직)
+- Swagger 데코레이터 누락
+
+### ops-agent
+- `print()` 사용
+- Type hints 생략
+- Fire-and-forget 비동기 호출 (`await` 없이)
+- 빈 `except` 블록
+- 하드코딩된 설정값
+- handlers/에서 외부 API 직접 호출
