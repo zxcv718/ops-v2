@@ -211,3 +211,16 @@ describe('ClassName', () => {
   });
 });
 ```
+
+---
+
+## NOT TO DO
+
+- Entity, DTO, Module에 TDD 적용 (설정 코드는 TDD 대상 아님)
+- Mock 없이 실제 DB/외부 API 호출
+- 테스트 파일에 `console.log` 남기기
+- 하나의 테스트에 여러 기능 동시 검증
+- GREEN 단계에서 과도한 코드 작성 (최소한만)
+- REFACTOR 단계에서 새 기능 추가
+- 테스트 실패를 무시하고 다음 단계 진행
+- `any` 타입으로 Mock 타입 우회
